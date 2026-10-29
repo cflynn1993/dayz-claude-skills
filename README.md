@@ -32,12 +32,14 @@ Copy the eighteen folders into one of these:
 
 Then open Claude Code in your mission folder and ask for the job, e.g. "check the server logs" or "add a new event". You can also run a skill as a slash command, e.g. `/dayz-server-check`.
 
+## Map toolkit (optional, for designing events and POIs)
+`tools/site_analysis/` is a small Node.js toolkit (Node 22+, no dependencies) that the event, POI and spawn skills use to read terrain heights, trees, buildings, roads and the navmesh straight from your own DayZ Server install. It picks flat, clear ground, places objects without floating or clipping, writes the event-group XML and verifies it, so DayZ Editor becomes optional. Copy the folder into your mission as `tools/site_analysis` and run `node prepare.js` once per map. See its README. No game files are included; everything is read from your install and cached in your user folder.
+
 ## Before you use them
 - **Paths:** the skills assume the default Steam location (`C:\Program Files (x86)\Steam\steamapps\common\DayZServer`) and a mission such as `mpmissions\dayzOffline.chernarusplus`. Tell Claude if yours differ.
 - **Git is strongly recommended.** Put the mission folder under git and tag Bohemia's stock files (e.g. `vanilla-1.30`), so every change is a reviewable, revertible commit. The update-merge skill relies on this.
 - **Notes:** a `CLAUDE.md` in the mission folder listing your server's rules and custom content helps a lot. The skills check for one.
 - **Validator:** the skills mention "your mission validator if you have one". Without one, Claude checks that the XML parses and then reads the server log.
 - **Storage wipes:** the skills only wipe `storage_1` when you say so, and only while the server is stopped.
-- **Map data:** `create-dynamic-event` can read terrain, roads, trees and buildings straight from your own server's PBO files to pick sites. No game files are included here; everything is read from your own install. The file-format notes are written for Chernarus (`ChernarusPlus.wrp`).
 
 Use at your own risk on a test server first. Always back up (or commit) before letting any tool edit a live mission.

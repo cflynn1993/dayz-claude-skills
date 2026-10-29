@@ -1,36 +1,28 @@
 ---
 name: dayz-infected-tuning
-description: Tune DayZ infected density and placement - zombie_territories.xml zones, the Infected* events behind them, server-wide caps and secondary-event pools - with density maps, horde hotspots and profiles like "quiet countryside, dangerous towns", checked in the RPT allocation lines.
+description: Tune DayZ infected density and placement - zombie_territories zones, Infected* events, caps and secondary pools - with density maps and RPT allocation checks.
 ---
 
 # DayZ infected tuning
 
-## How infected spawn
-- **`env/zombie_territories.xml`:** zones of the form `<zone name="InfectedVillage" smin smax dmin dmax x z r/>`.
-  - `name` is the infected category.
-  - `smin`/`smax`: the static (standing or sitting) infected count range.
-  - `dmin`/`dmax`: the dynamic (wandering) count range.
-  - `x`, `z`, `r`: the circle.
-- **Categories:** each zone `name` matches an `Infected…` event in `db/events.xml` (e.g. `InfectedVillage`, `InfectedCity`, `InfectedArmy`, `InfectedMedic`). That event's `<children>` set which infected classes appear, by weight. Vanilla Chernarus uses Village, Solitude, Industrial, City, Religious, Army, ArmyHard, Medic, Police, Firefighter, Spooky, NBC and Prisoner, and some maps add tiers (e.g. `InfectedVillageTier1`).
+## How it works
+- **`env/zombie_territories.xml`:** `<zone name="InfectedVillage" smin smax dmin dmax x z r/>`, where `s` = static (standing or sitting) count, `d` = dynamic (wandering), and `r` the circle radius.
+- **Categories:** each zone `name` matches an `Infected…` event in `db/events.xml`, whose `<children>` set the classes by weight. Vanilla Chernarus: Village, Solitude, Industrial, City, Religious, Army, ArmyHard, Medic, Police, Firefighter, Spooky, NBC, Prisoner (some maps add tiers).
 - **Caps:**
-  - `db/globals.xml` `ZombieMaxCount` limits the whole server.
-  - Each infected event has its own share, shown in the RPT as `[n] InfectedX :: dmax: … % == N pcs` with per-type `min`/`max` lines.
-  - Infected only spawn near players (`ZoneSpawnDist` in globals.xml).
-- **Event secondaries:** infected around events (heli crashes, custom camps) come from the event's `<secondary>` and the `<zone>` in `cfgeventspawns.xml`. A secondary with no territory zone gets only about 1% of the map's infected (about 7 on Chernarus), shared by all instances.
+  - `db/globals.xml` `ZombieMaxCount` limits the server
+  - each event's share shows in the RPT as `[n] InfectedX :: dmax … == N pcs` with per-type min/max lines
+  - infected spawn only near players (`ZoneSpawnDist`)
+- **Event infected:** from the event's `<secondary>` and the `<zone>` in `cfgeventspawns.xml`. Without a territory zone they get about 1% of the map's infected (about 7 on Chernarus), shared by all instances.
 
-## Ask first
-1. **Goal:** for example "quiet countryside, dangerous towns", more or fewer infected overall, a horde hotspot (a town, the military base), themed areas (more medics at hospitals), or performance relief.
-2. **Areas:** named towns or regions, or the whole map.
-3. **Limits:** the player count and server performance, which decide how high `ZombieMaxCount` can go.
+## Ask
+The goal (quiet countryside / dangerous towns, more or fewer, a horde hotspot, themed areas, performance); the areas; the player count and how far the cap can go.
 
-## Plan with data
-- Parse all zones and summarise them by category and region (counts, the summed `dmax`/`smax`). Render a density map (circles sized by `r`, coloured by `dmax`) with town names from `CfgWorlds > Names` in `worlds_<map>.pbo`.
-- Make changes by rule, e.g. "Village zones ×0.6 `dmin`/`dmax`, City ×1.3", or by zone (a horde hotspot = higher `dmax` and a slightly bigger `r` on a few zones). Keep min ≤ max.
-- A new zone needs a sensible category (whose infected suit the place), must avoid player spawn bubbles, and should not overlap custom event areas unless intended.
-- **Totals vs caps:** if the summed demand rises a lot, `ZombieMaxCount` may cap it anyway. Say so, and only raise the cap if the user accepts the performance cost.
-- To change *which* infected appear somewhere, edit that `Infected…` event's children (class names must exist; check against the game config), or make a new category with its own event.
+## Plan
+- Summarise zones by category and region and render a density map (circles sized by r, coloured by dmax, town names from `CfgWorlds > Names` or `tools/site_analysis` `towns()`).
+- Change by rule (e.g. Village d ×0.6, City ×1.3) or by zone (a hotspot: higher dmax and slightly larger r). Keep min ≤ max.
+- New zones: a fitting category, away from spawn bubbles and custom events.
+- If demand rises a lot, `ZombieMaxCount` may cap it. Only raise the cap if the user accepts the performance cost.
+- Changing which classes appear: edit that event's children (classes must exist), or add a new category with its own event.
 
 ## Apply and test
-- Commit first. Edit the numbers in place (never reformat the file), and check it parses.
-- Show a before/after table per category and region, plus the changed zones.
-- Restart (dayz-server-check). No wipe is needed. In the RPT allocation block, each changed category's `== N pcs` and per-type `min`/`max` should show no 0s for wanted types. In game, visit the hotspot and a "quiet" area to compare.
+Commit; edit numbers in place; parse-check; show a before/after table per category and region. Restart (no wipe). In the RPT allocation block, no wanted type should be 0. In game, compare the hotspot with a quiet area.

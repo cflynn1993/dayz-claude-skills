@@ -121,7 +121,7 @@ A plain-English guide to the 18 skills. You don't have to name a skill: describe
 - how many positions and how many active at once
 - the XML values, with suggested defaults and plain-English explanations of each radius
 **Checks:** clashes with nearby events, player spawns, gas zones, territories and roads, plus shared infected pools and loot limits.
-**Can design:** it can read your own server's map data (terrain heights, trees, buildings, roads) to pick flat, clear ground and place every tent and prop without floating or clipping. It also writes a DayZ Editor file you can review.
+**Can design without DayZ Editor:** using the included `tools/site_analysis` toolkit (Node.js), it reads your own server's map data (terrain heights, trees, buildings, roads) and picks flat, clear ground. It places every tent and prop without floating or clipping, writes the event files directly and verifies them afterwards. Opening the layout in DayZ Editor is optional.
 
 ### dayz-custom-poi
 **For:** permanent structures that exist every restart: outposts, ruins, survivor villages, bunkers.

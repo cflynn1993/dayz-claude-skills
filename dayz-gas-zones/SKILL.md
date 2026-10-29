@@ -1,60 +1,36 @@
 ---
 name: dayz-gas-zones
-description: Design DayZ contaminated (toxic gas) zones - static areas in cfgeffectarea.json and dynamic gas events - with radius, height, particles, safe logout positions and reward loot, and check that protective gear is obtainable and that zones don't cover spawns, events or bases.
+description: Design DayZ contaminated zones - static areas in cfgeffectarea.json and dynamic gas events - with safe logout positions and rewards, checking gear availability and clashes.
 ---
 
-# DayZ contaminated (gas) zones
+# DayZ contaminated zones
 
-## Static zones: cfgeffectarea.json
+## Static: cfgeffectarea.json
 ```json
-{
-  "Areas": [
-    {
-      "AreaName": "Ship-Bow",
-      "Type": "ContaminatedArea_Static",
-      "TriggerType": "ContaminatedTrigger",
-      "Data": {
-        "Pos": [13917, 0, 11178],          // x, (y ignored: 0), z
-        "Radius": 75,                       // metres
-        "PosHeight": 20, "NegHeight": 3,    // vertical extent above/below the ground
-        "InnerPartDist": 80, "OuterOffset": 30,   // particle spacing / outer ring offset
-        "ParticleName": "graphics/particles/contaminated_area_gas_bigass"
-      },
-      "PlayerData": {
-        "AroundPartName": "graphics/particles/contaminated_area_gas_around",
-        "TinyPartName": "graphics/particles/contaminated_area_gas_around_tiny",
-        "PPERequesterType": "PPERequester_ContaminatedAreaTint"
-      }
-    }
-  ],
-  "SafePositions": [[x, z], …]   // where players who log in inside a zone are moved to
-}
+{"Areas": [{"AreaName": "Ship-Bow", "Type": "ContaminatedArea_Static", "TriggerType": "ContaminatedTrigger",
+  "Data": {"Pos": [13917, 0, 11178], "Radius": 75, "PosHeight": 20, "NegHeight": 3, "InnerPartDist": 80, "OuterOffset": 30,
+           "ParticleName": "graphics/particles/contaminated_area_gas_bigass"},
+  "PlayerData": {"AroundPartName": "graphics/particles/contaminated_area_gas_around",
+                 "TinyPartName": "graphics/particles/contaminated_area_gas_around_tiny",
+                 "PPERequesterType": "PPERequester_ContaminatedAreaTint"}}],
+ "SafePositions": [[x, z], …]}
 ```
-(The comments are explanation only; JSON can't contain them.)
-- Copy the structure and particle names from an existing vanilla area rather than inventing fields. Other `Data` keys exist (ring counts, vertical layers); copy them from a vanilla map that uses them, or from Bohemia's wiki "DayZ:Contaminated_Areas_Configuration".
-- Large zones are made of several overlapping areas, e.g. the vanilla ship wreck uses four.
-- **SafePositions** must be outside every zone, on open ground. Keep a few near each zone.
+- `Pos` is x, 0, z. `PosHeight` and `NegHeight` are the vertical extent. Large zones are several overlapping areas (the vanilla ship uses 4).
+- Copy fields and particles from vanilla areas; other `Data` keys (rings, vertical layers) come from vanilla maps or wiki "DayZ:Contaminated_Areas_Configuration".
+- `SafePositions`: where players who log in inside a zone are moved to. They must be outside all zones, on open land.
 
-## Dynamic zones
-- An event (vanilla `StaticContaminatedArea` in `db/events.xml`) spawns `ContaminatedArea_Dynamic` at positions from `cfgeventspawns.xml`, preceded by an artillery-style warning. With `nominal` 0 it's off.
-- Turning it on means `nominal`/`min`/`max`, `lifetime` (how long a zone lasts) and the position list. Check positions with the same clash checks as below.
+## Dynamic
+Vanilla `StaticContaminatedArea` (`db/events.xml`) spawns `ContaminatedArea_Dynamic` at `cfgeventspawns.xml` positions after a warning; nominal 0 means off. Enabling it means setting nominal, min, max, lifetime (zone duration) and the positions.
 
-## Reward loot
-- `cfglimitsdefinition.xml` has the `ContaminatedArea` usage, and vanilla gives it to some high-value items. Check which items have it in `types.xml`, and whether the loot tables of buildings inside the zones can spawn them. Confirm in game: gas-zone loot is easy to get wrong.
+## Rewards
+Items with the `ContaminatedArea` usage (declared in `cfglimitsdefinition.xml`). Check which loot tables in the zones can spawn them, and confirm in game.
 
-## Ask first
-1. **Static, dynamic, or both.** Where (a named place, coordinates, or let the analysis suggest), and how big.
-2. **Intensity:** one area or a cluster, and the vertical extent (e.g. covering a bunker or a hilltop).
-3. **Rewards:** which items, and how rare.
-4. For dynamic zones: how often, how long, and where they may appear.
+## Ask
+Static, dynamic or both; place and size; one area or a cluster, and the height; rewards and rarity; for dynamic: frequency, duration and allowed places.
 
-## Checks
-- **Protection obtainable:** gas masks, filters, NBC suit parts and NBC packs must have `nominal` > 0 and a usage that actually spawns. Otherwise the zone is just a death trap.
-- **Clashes:** no zone may cover a player spawn bubble (`cfgplayerspawnpoints.xml`), static event positions (heli crashes, custom camps), vehicle spawns, or the area of a common base-building spot. Report each with its distance.
-- **SafePositions:** outside all zones, on land (check with the terrain heightmap and navmesh if available).
-- **JSON:** the file parses, and the field names match vanilla.
+## Check
+- **Protection obtainable:** gas masks, filters, NBC suit parts and NBC packs have nominal > 0 and a usage that actually spawns.
+- **Clashes:** no zone may cover player spawn bubbles, static events, vehicle spawns or common base spots (`tools/site_analysis/conflicts.js` if present). SafePositions must be on land and outside zones. The JSON parses.
 
 ## Write and test
-- Commit first, edit, and check the JSON parses.
-- Restart (dayz-server-check). In game, walk to the edge: you should see particles and a tint, and take damage without protection. Log out inside, then log back in to check the SafePositions move.
-- Wipe `storage_1` only with the OK, and only when needed (e.g. to reset dynamic event state).
+Commit, edit, parse-check, restart. In game: particles and tint at the edge, damage without protection, and logging out and back in inside a zone moves you to a SafePosition. Wipe only with the OK when dynamic state needs resetting.

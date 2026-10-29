@@ -1,37 +1,23 @@
 ---
 name: dayz-console-deploy
-description: Check that a DayZ mission tested on a PC server is safe for a console (PlayStation/Xbox) community server - no mod classes, vanilla-only settings, matching game version, DLC caveats - then package the mission files and give upload steps for the host's file manager.
+description: Check a PC-tested DayZ mission is console-safe (no mod classes, DLC caveats, version match), package the allowed files and give upload steps for the host.
 ---
 
 # DayZ console deploy
+Console community servers (e.g. Nitrado) can't run mods and usually expose only the mission XML/JSON files.
 
-Console community servers (rented from hosts such as Nitrado) **can't run mods**, and usually let you edit only some mission files. A PC test server is a good staging area, as long as nothing PC-only slips through.
+## Ask
+PlayStation or Xbox, the host, the map, and which files the host lets you edit (some allow `init.c` or panel settings); the console game version (it can lag PC); and whether the server owns Frostline or Badlands (DLC classes may be unavailable).
 
-## 1. Ask first
-1. **Host and platform:** PlayStation or Xbox, which host, which map, and which files the host lets you edit (often the mission XML/JSON files only; some also allow `init.c` or `serverDZ.cfg` options through their panel).
-2. **Console game version:** consoles can lag PC by days after an update. Anything new must exist on console too.
-3. **DLC:** does the console server own Frostline or Badlands content? DLC classes (`sakhal`, `nasdara`) may not be available or allowed there.
+## Check
+- **Mod classes:** no class in types, events, event groups, spawnabletypes, random presets, object spawners or spawn gear presets may come from a mod. Build the vanilla list from base `addons\` only (plus DLC if confirmed).
+- **DLC classes:** list every class from `nasdara\`/`sakhal\addons\` separately, for the user to decide.
+- **Settings:** `cfggameplay.json` keys exist in the console version; no mod files or keys.
+- **Leave out:** mod folders and their storage subfolders, admin-tool configs, start scripts, keys, `serverDZ.cfg` (the host's panel sets it), BattlEye settings.
+- The validator (if any) passes, and all XML/JSON parses. Flag very large object spawners or nominals.
 
-## 2. Checks
-- **Mod classes:** no class in `types.xml`, `events.xml`, event groups, `cfgspawnabletypes.xml`, `cfgrandompresets.xml`, object spawner files, or spawn gear presets may come from a mod. Build the vanilla class list from the base game `addons\` PBOs only (plus DLC if confirmed), and flag everything else.
-- **DLC classes:** list every class from `nasdara\addons\` or `sakhal\addons\` separately, so the user can decide.
-- **Settings:** `cfggameplay.json` keys must exist in the console version (compare with Bohemia's vanilla file for that version). No keys or files added by mods.
-- **PC-only pieces to leave out:** mod folders and their storage subfolders (e.g. `communityframework`), admin tool configs, `start_server.bat`, keys, `serverDZ.cfg` (hosts set this through their panel), and BattlEye settings.
-- **Mission validator** (if there is one) passes with no ERRORs; all XML and JSON parse.
-- **Size and performance:** large object-spawner files or very high nominals can behave worse on console hardware, so flag anything unusual.
+## Package
+Copy the allowed files into `deploy/<mission>_<date>/`, keeping the structure. Exclude `storage_*`, `.git`, `*.bak*`, tools, skills, notes and `.dze` files. Add `CHANGES.txt` (e.g. `git diff vanilla-<ver> --stat`), zip it, and report the files and size.
 
-## 3. Package
-- Copy only the mission files the host allows into a clean folder, e.g. `deploy/<mission>_<YYYY-MM-DD>/`, keeping the folder structure (`db/`, `env/`, `custom/` …).
-- **Exclude:** `storage_*`, `.git`, `*.bak*`, tools, skills, notes and `.dze` files.
-- Add a `CHANGES.txt` listing what differs from Bohemia's vanilla mission for that version (from git: `git diff vanilla-<version> --stat`), so changes can be re-applied after a console update.
-- Zip it, and report the file list and size.
-
-## 4. Upload steps (tell the user; don't log in for them)
-1. Stop the console server in the host's panel.
-2. Back up the server's current mission files (the host's file manager or FTP download).
-3. Upload the changed files to the same paths in the server's mission folder.
-4. If loot or event changes need a fresh economy, wipe storage in the host's panel (only with the user's OK; it resets the world).
-5. Start the server and check its log in the panel for "Type does not exist", JSON errors or crashes. Then join from a console and check the changes.
-
-## After a console game update
-Hosts may restore vanilla files. Re-check the version, re-run these checks against the new vanilla files (see dayz-update-merge), and re-upload.
+## Upload (tell the user; don't log in for them)
+Stop the server in the panel → back up its mission files → upload to the same paths → wipe storage in the panel only if needed and with the OK → start → check the panel log for "Type does not exist", JSON errors and crashes → test from a console. After a console update hosts may restore vanilla files, so re-run the checks (dayz-update-merge) and re-upload.
