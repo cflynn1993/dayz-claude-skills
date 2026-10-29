@@ -43,3 +43,6 @@ Then open Claude Code in your mission folder and ask for the job, e.g. "check th
 - **Storage wipes:** the skills only wipe `storage_1` when you say so, and only while the server is stopped.
 
 Use at your own risk on a test server first. Always back up (or commit) before letting any tool edit a live mission.
+
+## License
+MIT (see `LICENSE`). Use, adapt and share freely. DayZ is a trademark of Bohemia Interactive; this project is unofficial and includes no game files.

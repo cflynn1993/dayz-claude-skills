@@ -2,7 +2,7 @@
 // CLI: node site.js map <x> <z> <radius> <out.png> [res=0.5]
 //      node site.js patches <x> <z> <radius> <out.png> [floorRadius=5] [maxRange=0.6]
 const fs = require('fs'); const zlib = require('zlib');
-const { query, kind, yawOf, height, bboxModel } = require('./world');
+const { query, kind, yawOf, height, bboxModel, navRegion } = require('./world');
 
 const footprint = (o, bb, shrink = 1) => {
   const ax = [o.r[0], o.r[2]], dz = [o.r[6], o.r[8]], cx = (bb.min[0] + bb.max[0]) / 2, cz = (bb.min[2] + bb.max[2]) / 2;
@@ -33,12 +33,16 @@ function build(cx, cz, R, res = 0.5, { roadBuf = 8, railBuf = 7 } = {}) {
       fill(box([a[0], b[0]], [a[1], b[1]], buf), kd === 'road' ? 7 : 9, (x, z) => segDist(x, z, a, b) <= buf);
       if (kd === 'road') { const P = footprint(o, bb); fill(box(P.map(p => p[0]), P.map(p => p[1]), 0), 8, (x, z) => inPoly(x, z, P)); }
       feats.push({ k: kd, a, b, m: o.model });
+    } else if (kd === 'water') {
+      feats.push({ k: 'water', x: o.x, z: o.z, m: o.model });   // stream/pond boxes are far wider than the water: use the navmesh below
     } else {
-      const c = { bush: 2, rock: 4, wall: 5, water: 10 }[kd] || 6, P = footprint(o, bb, kd === 'bush' ? .6 : 1);
+      const c = { bush: 2, rock: 4, wall: 5 }[kd] || 6, P = footprint(o, bb, kd === 'bush' ? .6 : 1);
       fill(box(P.map(p => p[0]), P.map(p => p[1]), 0), c, (x, z) => inPoly(x, z, P));
       feats.push({ k: kd, x: o.x, z: o.z, yaw: yawOf(o), P, m: o.model, size: [0, 1, 2].map(i => bb.max[i] - bb.min[i]) });
     }
   }
+  const nav = navRegion(x0, z0, x0 + W * res, z0 + H * res, res);   // real water surfaces (navmesh area 5: sea, rivers, ponds)
+  for (let k = 0; k < W * H; k++) if (nav.area[k] === 5) code[k] = 10;
   const slope = new Float32Array(W * H);
   for (let j = 1; j < H - 1; j++) for (let i = 1; i < W - 1; i++) { const k = j * W + i; slope[k] = Math.hypot((h[k + 1] - h[k - 1]) / (2 * res), (h[k + W] - h[k - W]) / (2 * res)); }
   const codeAt = (x, z) => { const i = Math.floor((x - x0) / res), j = Math.floor((z - z0) / res); return i < 0 || j < 0 || i >= W || j >= H ? 255 : code[j * W + i]; };
